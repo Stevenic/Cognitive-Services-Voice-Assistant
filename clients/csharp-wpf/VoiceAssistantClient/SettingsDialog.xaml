@@ -152,16 +152,13 @@
                     <RowDefinition Height="auto" />
                 </Grid.RowDefinitions>
 
-                <Label  Grid.Row="0" Grid.Column="0" Content="Advanced settings:" FontWeight="Bold" />
+                <Label  Grid.Row="0" Grid.Column="0" Content="Meeting Assistant settings:" FontWeight="Bold" />
 
-                <Label  Grid.Row="1" Grid.Column="0" Content="Url override:"/>
-                <TextBox  Grid.Row="1" Grid.Column="1"  Name="UrlOverrideTextBox" Text="{Binding UrlOverride}" TextChanged="UrlOverrideTextBox_TextChanged"/>
+                <Label  Grid.Row="1" Grid.Column="0" Content="ServicebusConnectionString:"/>
+                <TextBox  Grid.Row="1" Grid.Column="1"  Name="ServicebusConnectionStringField" Text="{Binding ServicebusConnectionString}" TextChanged="ServicebusConnectionStringField_TextChanged"/>
 
-                <Label Grid.Row="2" Grid.Column="0" Content="Proxy host:"/>
-                <TextBox Grid.Row="2" Grid.Column="1" Name="ProxyHost" Text="{Binding ProxyHostName}"/>
-
-                <Label  Grid.Row="3" Grid.Column="0" Content="Proxy port:"/>
-                <TextBox Grid.Row="3" Grid.Column="1" Name="ProxyPort" Text="{Binding ProxyPortNumber}"/>
+                <Label Grid.Row="2" Grid.Column="0" Content="SubscriptionName:"/>
+                <TextBox Grid.Row="2" Grid.Column="1" Name="SubscriptionNameField" Text="{Binding SubscriptionName}"/>
             </Grid>
         </StackPanel>
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">

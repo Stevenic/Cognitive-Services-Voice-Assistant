@@ -42,5 +42,9 @@ namespace VoiceAssistantClient.Settings
         public string VoiceDeploymentIds { get; set; }
 
         public bool VoiceDeploymentEnabled { get; set; }
+
+        public string ServicebusConnectionString { get; set; }
+
+        public string SubscriptionName { get; set; }
     }
 }

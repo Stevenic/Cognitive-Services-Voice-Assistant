@@ -27,6 +27,7 @@ namespace VoiceAssistantClient
     using NAudio.Wave;
     using Newtonsoft.Json;
     using VoiceAssistantClient.Settings;
+    using Activity = Microsoft.Bot.Schema.Activity;
 
     /// <summary>
     /// Interaction logic for MainWindow.xaml.
@@ -42,6 +43,7 @@ namespace VoiceAssistantClient
         private CustomSpeechConfiguration customSpeechConfig = null;
         private ListenState listening = ListenState.NotListening;
         private AdaptiveCardRenderer renderer;
+        private ProactiveActivitiesReceiver proactiveReceiver = null;
 
         public MainWindow()
         {
@@ -175,7 +177,7 @@ namespace VoiceAssistantClient
             {
                 Debug.WriteLine(e);
                 this.Messages.Add(new MessageDisplay($"App Error (see log for details): {Environment.NewLine} {e.Source} : {e.Message}", Sender.Channel));
-                var trace = new Activity
+                var trace = new Microsoft.Bot.Schema.Activity
                 {
                     Type = "Exception",
                     Value = e,
@@ -191,7 +193,6 @@ namespace VoiceAssistantClient
         private void InitSpeechConnector()
         {
             DialogServiceConfig config = null;
-
             var hasSubscription = !string.IsNullOrWhiteSpace(this.settings.RuntimeSettings.Profile.SubscriptionKey);
             var hasRegion = !string.IsNullOrWhiteSpace(this.settings.RuntimeSettings.Profile.SubscriptionKeyRegion);
             var hasBotId = !string.IsNullOrWhiteSpace(this.settings.RuntimeSettings.Profile.BotId);
@@ -255,6 +256,10 @@ namespace VoiceAssistantClient
                 config.SetProperty(PropertyId.Conversation_From_Id, this.settings.RuntimeSettings.Profile.FromId);
             }
 
+            // MEETING_ASSISTANT: set conversation ID to meeting ID (GUID for now)
+            var meetingId = "test_meeting_id";
+            config.SetProperty(PropertyId.Conversation_Conversation_Id, meetingId);
+
             if (!string.IsNullOrWhiteSpace(this.settings.RuntimeSettings.Profile.LogFilePath))
             {
                 // Speech SDK has verbose logging to local file, which may be useful when reporting issues.
@@ -293,6 +298,14 @@ namespace VoiceAssistantClient
                 this.connector = null;
             }
 
+            // MEETING_ASSISTANT: Disconnect receivers and unsubscribe from servicebus topics
+            if (this.proactiveReceiver != null)
+            {
+                this.proactiveReceiver.Dispose();
+                this.proactiveReceiver = null;
+                ProactiveActivitiesReceiver.UnsubscribeAsync().Wait();
+            }
+
             // Create a new Dialog Service Connector for the above configuration and register to receive events
             this.connector = new DialogServiceConnector(config, AudioConfig.FromDefaultMicrophoneInput());
             this.connector.ActivityReceived += this.Connector_ActivityReceived;
@@ -303,7 +316,15 @@ namespace VoiceAssistantClient
             this.connector.SessionStopped += this.Connector_SessionStopped;
 
             // Open a connection to Direct Line Speech channel
-            this.connector.ConnectAsync();
+            this.connector.ConnectAsync().Wait();
+
+            // MEETING_ASSISTANT: subscribe to servicebus topics and create receivers
+            if (!String.IsNullOrEmpty(this.settings.RuntimeSettings.Profile.ServicebusConnectionString))
+            {
+                var profile = this.settings.RuntimeSettings.Profile;
+                ProactiveActivitiesReceiver.SubscribeAsync(profile.ServicebusConnectionString, profile.SubscriptionName).Wait();
+                this.proactiveReceiver = new ProactiveActivitiesReceiver(this.connector, meetingId);
+            }
 
             if (this.settings.RuntimeSettings.Profile.CustomSpeechEnabled)
             {
@@ -513,7 +534,7 @@ namespace VoiceAssistantClient
             this.UpdateConnectionProfileInfoBlock();
         }
 
-        private void StartListening()
+        private async Task StartListening()
         {
             if (this.ListeningState == ListenState.NotListening)
             {
