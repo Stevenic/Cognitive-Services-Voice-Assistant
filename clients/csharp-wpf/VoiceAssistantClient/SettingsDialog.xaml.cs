@@ -316,7 +316,6 @@ namespace VoiceAssistantClient
             var hasConnectionProfileName = !string.IsNullOrWhiteSpace(this.ConnectionProfileComboBox.Text) && this.ConnectionProfileComboBox.Text != " ";
             var hasSubscription = !string.IsNullOrWhiteSpace(this.SubscriptionKeyTextBox.Text);
             var hasRegion = !string.IsNullOrWhiteSpace(this.SubscriptionRegionTextBox.Text);
-            var hasServicebusConnectionString = !string.IsNullOrWhiteSpace(this.ServicebusConnectionStringField.Text);
 
             var enableSaveButton = false;
             var enableDeleteButton = false;
@@ -328,13 +327,9 @@ namespace VoiceAssistantClient
             {
                 this.SaveButtonInfoBlock.Text = "You must provide a speech subscription key.";
             }
-            else if (!hasRegion && !hasServicebusConnectionString)
+            else if (!hasRegion)
             {
-                this.SaveButtonInfoBlock.Text = "You must provide a region or URL override.";
-            }
-            else if (hasRegion && hasServicebusConnectionString)
-            {
-                this.SaveButtonInfoBlock.Text = "You must specify only region OR URL override, not both.";
+                this.SaveButtonInfoBlock.Text = "You must provide a region.";
             }
             else
             {
